@@ -2,6 +2,7 @@
 Automatizar testes web do app travel-planner
 
 ## Estrutura do projeto
+```
 travel-planner-e2e/
 ├── tests/
 │   └── e2e/
@@ -14,3 +15,4 @@ travel-planner-e2e/
 ├── package-lock.json
 ├── playwright.config.ts
 └── README.md
+```
