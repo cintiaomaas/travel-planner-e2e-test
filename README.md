@@ -75,6 +75,17 @@ npm run test:e2e:report
 
 O relatório é gerado automaticamente, mas não é aberto ao final da execução. Os testes executam sequencialmente porque compartilham dados de cadastro.
 
+## Integração contínua
+
+O workflow `.github/workflows/playwright.yml` executa automaticamente:
+
+- em pull requests direcionados à branch `main`;
+- em pushes realizados na branch `main`;
+- manualmente pela opção `workflow_dispatch` do GitHub Actions.
+
+O job cria um MySQL temporário, baixa a aplicação `cintiaomaas/travel-planner`, aplica o schema Prisma, inicia o Next.js e executa os testes no Google Chrome em modo headless. Nenhuma credencial de produção é utilizada.
+
+Ao final, o workflow publica o relatório HTML, as evidências do Playwright e o log da aplicação como artifact por 14 dias. O job `Testes E2E no Chrome` pode ser configurado como status check obrigatório nas regras de proteção da branch `main` para impedir integrações quando houver falhas.
 
 <hr>
 Autor: Cintia Maas
