@@ -83,9 +83,11 @@ O workflow `.github/workflows/playwright.yml` executa automaticamente:
 - em pushes realizados na branch `main`;
 - manualmente pela opção `workflow_dispatch` do GitHub Actions.
 
-O job cria um MySQL temporário, baixa a aplicação `cintiaomaas/travel-planner`, aplica o schema Prisma, inicia o Next.js e executa os testes no Google Chrome em modo headless. Nenhuma credencial de produção é utilizada.
+O job executa os testes no Google Chrome em modo headless contra a aplicação publicada em `https://meu-travel-planner.vercel.app`. Antes da suíte, o workflow aguarda a aplicação responder. O cenário de e-mail duplicado pressupõe que `teste@teste.com` já exista no banco utilizado pelo ambiente.
 
-Ao final, o workflow publica o relatório HTML, as evidências do Playwright e o log da aplicação como artifact por 14 dias. O job `Testes E2E no Chrome` pode ser configurado como status check obrigatório nas regras de proteção da branch `main` para impedir integrações quando houver falhas.
+Para a limpeza dos usuários criados pelos testes, cadastre `E2E_DATABASE_URL` em **Settings > Secrets and variables > Actions > Repository secrets**. Coloque o value do banco que está configurado no .enc, não coloque a URL real do banco no workflow ou em arquivos versionados.
+
+Ao final, o workflow publica o relatório HTML e as evidências do Playwright como artifact por 14 dias. O job `Testes E2E no Chrome` pode ser configurado como status check obrigatório nas regras de proteção da branch `main` para impedir integrações quando houver falhas.
 
 <hr>
-Autor: Cintia Maas
+Autor: Cintia Maas Otto

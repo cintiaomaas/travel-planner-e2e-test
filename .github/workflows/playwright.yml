@@ -16,14 +16,8 @@ permissions:
 
 env:
   CI: true
-  E2E_BASE_URL: http://127.0.0.1:3000/
-  E2E_DATABASE_URL: mysql://root:password@127.0.0.1:3306/travel_planner
-  DATABASE_URL: mysql://root:password@127.0.0.1:3306/travel_planner
-  AUTH_SECRET: github-actions-travel-planner-secret
-  AUTH_URL: http://127.0.0.1:3000
-  NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
-  RESEND_API_KEY: re_github_actions_placeholder
-  EMAIL_FROM: Travel Planner <ci@example.com>
+  E2E_BASE_URL: https://meu-travel-planner.vercel.app/
+  E2E_DATABASE_URL: ${{ secrets.E2E_DATABASE_URL }}
 
 jobs:
   e2e:
@@ -31,76 +25,35 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
-    services:
-      mysql:
-        image: mysql:8.0
-        env:
-          MYSQL_ROOT_PASSWORD: password
-          MYSQL_DATABASE: travel_planner
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping --host=127.0.0.1 --password=password"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
-
     steps:
       - name: Baixar projeto de testes
         uses: actions/checkout@v6
-
-      - name: Baixar aplicação Travel Planner
-        uses: actions/checkout@v6
-        with:
-          repository: cintiaomaas/travel-planner
-          path: travel-planner
 
       - name: Configurar Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: |
-            package-lock.json
-            travel-planner/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Instalar dependências dos testes
         run: npm ci
 
-      - name: Instalar dependências da aplicação
-        run: npm ci --prefix travel-planner
-
       - name: Instalar Google Chrome para o Playwright
         run: npx playwright install --with-deps chrome
-
-      - name: Preparar banco de dados
-        run: |
-          npm --prefix travel-planner run db:generate
-          npm --prefix travel-planner run db:push
-
-      - name: Iniciar aplicação
-        run: npm --prefix travel-planner run dev > travel-planner.log 2>&1 &
 
       - name: Aguardar aplicação
         shell: bash
         run: |
           for attempt in {1..60}; do
-            if curl --fail --silent --show-error http://127.0.0.1:3000/login > /dev/null; then
+            if curl --fail --location --silent --show-error \
+              https://meu-travel-planner.vercel.app/login > /dev/null; then
               exit 0
             fi
             sleep 2
           done
 
-          cat travel-planner.log
           exit 1
-
-      - name: Preparar dados de teste
-        run: |
-          curl --fail --silent --show-error \
-            --request POST \
-            --header "Content-Type: application/json" \
-            --data '{"name":"teste","email":"teste@teste.com","password":"teste1234"}' \
-            http://127.0.0.1:3000/api/register
 
       - name: Executar testes E2E
         run: npm run test:e2e
@@ -113,6 +66,5 @@ jobs:
           path: |
             playwright-report/
             test-results/
-            travel-planner.log
           if-no-files-found: warn
           retention-days: 14
