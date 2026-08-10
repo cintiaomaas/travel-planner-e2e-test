@@ -1,27 +1,118 @@
-name: Playwright Tests
+name: CI - Playwright E2E
+
 on:
   push:
-    branches: [ main, master ]
+    branches: [main]
   pull_request:
-    branches: [ main, master ]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CI: true
+  E2E_BASE_URL: http://127.0.0.1:3000/
+  E2E_DATABASE_URL: mysql://root:password@127.0.0.1:3306/travel_planner
+  DATABASE_URL: mysql://root:password@127.0.0.1:3306/travel_planner
+  AUTH_SECRET: github-actions-travel-planner-secret
+  AUTH_URL: http://127.0.0.1:3000
+  NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
+  RESEND_API_KEY: re_github_actions_placeholder
+  EMAIL_FROM: Travel Planner <ci@example.com>
+
 jobs:
-  test:
-    timeout-minutes: 60
+  e2e:
+    name: Testes E2E no Chrome
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: travel_planner
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --host=127.0.0.1 --password=password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: lts/*
-    - name: Install dependencies
-      run: npm ci
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
-    - name: Run Playwright tests
-      run: npx playwright test
-    - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
+      - name: Baixar projeto de testes
+        uses: actions/checkout@v6
+
+      - name: Baixar aplicação Travel Planner
+        uses: actions/checkout@v6
+        with:
+          repository: cintiaomaas/travel-planner
+          path: travel-planner
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            travel-planner/package-lock.json
+
+      - name: Instalar dependências dos testes
+        run: npm ci
+
+      - name: Instalar dependências da aplicação
+        run: npm ci --prefix travel-planner
+
+      - name: Instalar Google Chrome para o Playwright
+        run: npx playwright install --with-deps chrome
+
+      - name: Preparar banco de dados
+        run: |
+          npm --prefix travel-planner run db:generate
+          npm --prefix travel-planner run db:push
+
+      - name: Iniciar aplicação
+        run: npm --prefix travel-planner run dev > travel-planner.log 2>&1 &
+
+      - name: Aguardar aplicação
+        shell: bash
+        run: |
+          for attempt in {1..60}; do
+            if curl --fail --silent --show-error http://127.0.0.1:3000/login > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+
+          cat travel-planner.log
+          exit 1
+
+      - name: Preparar dados de teste
+        run: |
+          curl --fail --silent --show-error \
+            --request POST \
+            --header "Content-Type: application/json" \
+            --data '{"name":"teste","email":"teste@teste.com","password":"teste1234"}' \
+            http://127.0.0.1:3000/api/register
+
+      - name: Executar testes E2E
+        run: npm run test:e2e
+
+      - name: Publicar relatório e evidências
+        if: ${{ always() && !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-${{ github.run_attempt }}
+          path: |
+            playwright-report/
+            test-results/
+            travel-planner.log
+          if-no-files-found: warn
+          retention-days: 14

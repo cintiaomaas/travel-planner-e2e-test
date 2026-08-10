@@ -21,10 +21,12 @@ export default defineConfig({
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
     baseURL: process.env.E2E_BASE_URL,
+    locale: 'pt-BR',
+    launchOptions: { args: ['--lang=pt-BR'] },
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
-    headless: false, //true = faz o teste sem abrir o navegador, false = abre o navegador e faz o teste
+    headless: !!process.env.CI, //true = faz o teste sem abrir o navegador, false = abre o navegador e faz o teste
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
   },
