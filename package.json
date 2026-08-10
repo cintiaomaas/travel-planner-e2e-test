@@ -3,7 +3,12 @@
   "version": "1.0.0",
   "description": "Automatizar testes web do app travel-planner",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/cintiaomaas/travel-planner-e2e-test.git"
@@ -19,12 +24,7 @@
   "devDependencies": {
     "@playwright/test": "^1.62.1",
     "@types/node": "^26.2.0",
-    "dotenv": "^17.4.2"
-  },
-  "scripts": {
-    "test:e2e": "playwright test",
-    "test:e2e:headed": "playwright test --headed",
-    "test:e2e:ui": "playwright test --ui",
-    "test:e2e:report": "playwright show-report"
+    "dotenv": "^17.4.2",
+    "mysql2": "^3.23.2"
   }
 }
