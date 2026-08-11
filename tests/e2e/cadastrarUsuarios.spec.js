@@ -19,10 +19,15 @@ test.describe('Cadastro de Usuários', () => {
 
   test('Deve cadastrar um novo usuário com sucesso', async ({ page }) => {
     await criarConta(page, testUser.name, testUser.email, testUser.password);
-    await page.getByRole('button', { name: 'Criar conta e entrar' }).click();
+
+    await Promise.all([
+      page.waitForURL((url) => url.pathname === '/', { timeout: 60_000 }),
+      page.getByRole('button', { name: 'Criar conta e entrar' }).click(),
+    ]);
+
     await expect(
       page.getByRole('heading', { name: 'Olá, João' }),
-    ).toBeVisible({ timeout: 15_000 });
+    ).toBeVisible();
   })
 
   test('Não deve permitir e-mail inválido', async ({ page }) => {
@@ -34,11 +39,11 @@ test.describe('Cadastro de Usuários', () => {
   test('Não deve permitir senha com menos de 8 caracteres', async ({ page }) => {
     await criarConta(page, testUser.name, testUser.email, '123');
     await page.getByRole('button', { name: 'Criar conta e entrar' }).click();
-    expect(
-      await page
-        .getByRole('textbox', { name: /Senha/ })
-        .evaluate((input) => input.validationMessage),
-    ).toContain('Aumente este texto para 8 caracteres ou mais');
+    await expect(
+      page.getByRole('alert').filter({
+        hasText: 'A senha deve ter pelo menos 8 caracteres.',
+      }),
+    ).toBeVisible();
   })
 
   test('Não deve permitir cadastro com e-mail já existente', async ({ page }) => {
