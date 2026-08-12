@@ -1,64 +1,98 @@
-# travel-planner-e2e-test
+# Travel Planner — testes E2E
 
-Automatizar testes web do app travel-planner
+Suíte de testes Web end-to-end do Travel Planner, desenvolvida com Playwright e executada no Google Chrome.
 
 ## Pré-requisitos
 
-- Node.js e npm instalados;
-- Google Chrome instalado;
-- aplicação Travel Planner em execução;
-- acesso ao banco MySQL utilizado pela aplicação.
+- Node.js 22 ou uma versão compatível;
+- npm;
+- Google Chrome;
+- acesso à aplicação Travel Planner;
+- acesso ao banco MySQL da aplicação para executar os testes de cadastro.
 
 ## Estrutura do projeto
 
 ```text
 travel-planner-e2e-test/
-|-- tests/
-|   |-- e2e/
-|   |   `-- cadastrarUsuarios.spec.js
-|   `-- support/
-|       |-- database.js
-|       `-- pages/
-|           `-- criarConta.js
-|-- .env.example
-|-- .gitignore
-|-- package.json
-|-- package-lock.json
-|-- playwright.config.js
-`-- README.md
+├── .github/
+│   └── workflows/
+│       └── playwright.yml
+├── tests/
+│   ├── data/
+│   │   └── usuarios.js
+│   ├── e2e/
+│   │   ├── cadastrar-usuarios.spec.js
+│   │   └── login-usuarios.spec.js
+│   ├── helpers/
+│   │   └── database.js
+│   └── pages/
+│       └── autenticacaoPage.js
+├── .env.example
+├── .gitignore
+├── package-lock.json
+├── package.json
+├── playwright.config.js
+└── README.md
 ```
 
-## Configuração
+## Instalação e configuração
 
-1. Instale as dependências:
+1. Na pasta do projeto, instale as dependências:
 
 ```powershell
-npm install
+npm ci
 ```
 
-2. Crie o arquivo `.env` com base no `.env.example`:
+2. Instale o Google Chrome usado pelo Playwright:
 
-```env
-E2E_BASE_URL=http://localhost:3000/
-E2E_DATABASE_URL=mysql://usuario:senha@localhost:3306/travel_planner
+```powershell
+npx playwright install chrome
 ```
 
-`E2E_BASE_URL` define o endereço da aplicação. `E2E_DATABASE_URL` permite remover os usuários criados pelos testes. No ambiente local, quando essa variável não está definida, o projeto tenta carregar `DATABASE_URL` de `../travel-planner/.env`.
-
-O arquivo `.env` contém credenciais e não deve ser versionado. Use somente valores fictícios no `.env.example`.
-
-3. Caso o Playwright solicite o componente de vídeo, instale o FFmpeg:
+Como o projeto mantém o vídeo das execuções que falham, instale também o FFmpeg:
 
 ```powershell
 npx playwright install ffmpeg
 ```
 
+Caso a execução de `npx.ps1` esteja bloqueada pela política do PowerShell, use `npx.cmd`:
+
+```powershell
+npx.cmd playwright install chrome ffmpeg
+```
+
+3. Crie o arquivo `.env` a partir do exemplo:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Configure as variáveis:
+
+```env
+E2E_BASE_URL=https://meu-travel-planner.vercel.app/
+E2E_DATABASE_URL=mysql://usuario:senha@localhost:3306/travel_planner
+```
+
+- `E2E_BASE_URL` define a aplicação testada. Substitua o valor por `http://localhost:3000/` para testar uma instância local;
+- `E2E_DATABASE_URL` define a conexão usada para remover o usuário de teste antes e depois dos cenários de cadastro.
+
+Quando `E2E_DATABASE_URL` não está definida, o helper procura `DATABASE_URL` no ambiente. Se nenhuma das duas existir, ele tenta carregar `DATABASE_URL` de `../travel-planner/.env`.
+
+O arquivo `.env` pode conter credenciais e não deve ser versionado. Mantenha apenas valores fictícios no `.env.example`.
+
 ## Executando os testes
 
-Executar todos os testes no Google Chrome:
+Executar toda a suíte:
 
 ```powershell
 npm run test:e2e
+```
+
+Executar com o navegador visível:
+
+```powershell
+npm run test:e2e:headed
 ```
 
 Abrir o modo interativo do Playwright:
@@ -73,21 +107,4 @@ Abrir o último relatório HTML:
 npm run test:e2e:report
 ```
 
-O relatório é gerado automaticamente, mas não é aberto ao final da execução. Os testes executam sequencialmente porque compartilham dados de cadastro.
-
-## Integração contínua
-
-O workflow `.github/workflows/playwright.yml` executa automaticamente:
-
-- em pull requests direcionados à branch `main`;
-- em pushes realizados na branch `main`;
-- manualmente pela opção `workflow_dispatch` do GitHub Actions.
-
-O job executa os testes no Google Chrome em modo headless contra a aplicação publicada em `https://meu-travel-planner.vercel.app`. Antes da suíte, o workflow aguarda a aplicação responder. O cenário de e-mail duplicado pressupõe que `teste@teste.com` já exista no banco utilizado pelo ambiente.
-
-Para a limpeza dos usuários criados pelos testes, cadastre `E2E_DATABASE_URL` em **Settings > Secrets and variables > Actions > Repository secrets**. Coloque o value do banco que está configurado no .enc, não coloque a URL real do banco no workflow ou em arquivos versionados.
-
-Ao final, o workflow publica o relatório HTML e as evidências do Playwright como artifact por 14 dias. O job `Testes E2E no Chrome` pode ser configurado como status check obrigatório nas regras de proteção da branch `main` para impedir integrações quando houver falhas.
-
-<hr>
-Autor: Cintia Maas Otto
+O projeto usa o Google Chrome. Em ambiente local, o navegador é exibido por padrão; no CI, a execução ocorre em modo headless.
