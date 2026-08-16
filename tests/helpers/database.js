@@ -42,3 +42,42 @@ export async function deleteUserByEmail(email) {
     await connection.end();
   }
 }
+
+/**
+ * Deleta todas as viagens de um usuário específico
+ * Útil para limpeza de testes
+ * @param {string} email - E-mail do usuário
+ */
+export async function deleteViagensDoUsuario(email) {
+  const connection = await mysql.createConnection(getDatabaseConfig());
+
+  try {
+    // Primeiro obtém o ID do usuário
+    const [users] = await connection.execute('SELECT id FROM `User` WHERE `email` = ?', [email]);
+
+    if (users.length === 0) {
+      return; // Usuário não existe
+    }
+
+    const userId = users[0].id;
+
+    // Deleta todas as viagens do usuário
+    await connection.execute('DELETE FROM `Trip` WHERE `userId` = ?', [userId]);
+  } finally {
+    await connection.end();
+  }
+}
+
+/**
+ * Deleta todas as viagens de um usuário específico por ID
+ * @param {number} userId - ID do usuário
+ */
+export async function deleteViagensDoUsuarioPorId(userId) {
+  const connection = await mysql.createConnection(getDatabaseConfig());
+
+  try {
+    await connection.execute('DELETE FROM `Trip` WHERE `userId` = ?', [userId]);
+  } finally {
+    await connection.end();
+  }
+}
