@@ -20,13 +20,19 @@ travel-planner-e2e-test/
 ├── tests/
 │   ├── data/
 │   │   └── usuarios.js
+|   |   └── viagens.js
 │   ├── e2e/
-│   │   ├── cadastrar-usuarios.spec.js
-│   │   └── login-usuarios.spec.js
+|   |   |__viagem
+|   |       |__ cadastro-viagem.spec.js
+|   |   |__ login
+│   │       ├── cadastrar-usuarios.spec.js
+│   │       └── login-usuarios.spec.js
 │   ├── helpers/
-│   │   └── database.js
+│       └── database.js
+|       └── dateHelper.js
 │   └── pages/
 │       └── autenticacaoPage.js
+|       └── viagemPage.js
 ├── .env.example
 ├── .gitignore
 ├── package-lock.json
