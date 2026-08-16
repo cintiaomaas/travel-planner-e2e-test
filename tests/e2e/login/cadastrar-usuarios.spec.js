@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { deleteUserByEmail } from '../helpers/database.js';
-import { preencherCadastro } from '../pages/autenticacaoPage.js';
-import { testUser } from '../data/usuarios.js';
+import { deleteUserByEmail } from '../../helpers/database.js';
+import { preencherCadastro } from '../../pages/autenticacaoPage.js';
+import { testUser } from '../../data/usuarios.js';
 
 
 test.describe('Cadastro de Usuários', () => {

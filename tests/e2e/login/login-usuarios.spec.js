@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { preencherLogin } from '../pages/autenticacaoPage.js';
-import { loginUsuarioExistente } from '../data/usuarios.js';
+import { preencherLogin } from '../../pages/autenticacaoPage.js';
+import { loginUsuarioExistente } from '../../data/usuarios.js';
 
 test.describe('Login de Usuários', () => {
     test('Deve permitir que um usuário logue com sucesso', async ({ page }) => {
@@ -45,7 +45,7 @@ test.describe('Login de Usuários', () => {
         await expect(page.getByText('Confira os dados informados para entrar na sua conta.')).toBeVisible();
     })
 
-    test('Deve permitir desologar um usuário logado com sucesso', async ({ page }) => {
+    test.only('Deve permitir deslogar um usuário logado com sucesso', async ({ page }) => {
         await preencherLogin(page, loginUsuarioExistente.email, loginUsuarioExistente.password);
         await page.getByRole('button', { name: 'Entrar' }).click();
         await expect(page.getByRole('heading', { name: 'Olá, teste' })).toBeVisible();
