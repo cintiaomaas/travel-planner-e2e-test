@@ -45,7 +45,7 @@ test.describe('Login de Usuários', () => {
         await expect(page.getByText('Confira os dados informados para entrar na sua conta.')).toBeVisible();
     })
 
-    test.only('Deve permitir deslogar um usuário logado com sucesso', async ({ page }) => {
+    test('Deve permitir deslogar um usuário logado com sucesso', async ({ page }) => {
         await preencherLogin(page, loginUsuarioExistente.email, loginUsuarioExistente.password);
         await page.getByRole('button', { name: 'Entrar' }).click();
         await expect(page.getByRole('heading', { name: 'Olá, teste' })).toBeVisible();
