@@ -19,20 +19,24 @@ travel-planner-e2e-test/
 │       └── playwright.yml
 ├── tests/
 │   ├── data/
-│   │   └── usuarios.js
-|   |   └── viagens.js
+│   │   ├── usuarios.js
+│   │   └── viagens.js
 │   ├── e2e/
-|   |   |__viagem
-|   |       |__ cadastro-viagem.spec.js
-|   |   |__ login
-│   │       ├── cadastrar-usuarios.spec.js
-│   │       └── login-usuarios.spec.js
+│   │   ├── login/
+│   │   │   ├── cadastrar-usuarios.spec.js
+│   │   │   └── login-usuarios.spec.js
+│   │   ├── orcamento/
+│   │   │   └── integracao-orcamento-despesas.spec.js
+│   │   └── viagem/
+│   │       └── cadastrar-viagem.spec.js
 │   ├── helpers/
-│       └── database.js
-|       └── dateHelper.js
+│   │   ├── currencyHelper.js
+│   │   ├── database.js
+│   │   └── dateHelper.js
 │   └── pages/
-│       └── autenticacaoPage.js
-|       └── viagemPage.js
+│       ├── autenticacaoPage.js
+│       ├── orcamentoPage.js
+│       └── viagemPage.js
 ├── .env.example
 ├── .gitignore
 ├── package-lock.json
