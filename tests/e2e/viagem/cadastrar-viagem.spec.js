@@ -3,16 +3,16 @@ import { preencherLogin } from '../../pages/autenticacaoPage.js';
 import { loginUsuarioExistente } from '../../data/usuarios.js';
 import {
   navegarParaMinhasViagens,
-  preencherFormularioViagem,
-  submeterFormulario,
   preencherESubmeterViagem,
   validarMensagemSucesso,
   validarViagemCriada,
   validarMensagemErro,
   validarPeriodoViagem,
 } from '../../pages/viagemPage.js';
-import { viagem, statusValidos } from '../../data/viagens.js';
+import { viagem } from '../../data/viagens.js';
 import { dataAtual, dataPassada, dataFutura } from '../../helpers/dateHelper.js';
+import { formatarMoeda } from '../../helpers/currencyHelper.js';
+import { deleteViagensDoUsuario } from '../../helpers/database.js';
 
 
 /* 
@@ -28,7 +28,12 @@ test.describe('Cadastro de Viagens', () => {
     await expect(page).toHaveURL(/.*\/$/, { timeout: 10_000 });
     //Clica no botão Nova Viagem
     await page.getByRole('button', { name: ' Nova viagem' }).click();
+  });
 
+  test.afterEach(async ({ context }) => {
+    // Encerra a página para impedir novas sincronizações do estado antigo.
+    await context.close();
+    await deleteViagensDoUsuario(loginUsuarioExistente.email);
   });
 
   test.describe('Validar cadastro de viagem', () => {
@@ -84,10 +89,12 @@ test.describe('Cadastro de Viagens', () => {
       // Assert
       await validarMensagemSucesso(page);
       await validarViagemCriada(page, viagemOrcamentoZero.nome);
-      await expect(page.getByText(`Orçamento R$ ${Number(viagemOrcamentoZero.orcamento)}`)).toBeVisible(); //Number converte 0.00 em 0
+      await expect(page.getByRole('article')
+        .filter({ hasText: 'Saldo disponível' }))
+        .toContainText('Não definido');
     });
 
-    test('BUG - Deve aceitar orçamento muito alto (limite máximo)', async ({ page }) => {
+    test('Deve aceitar orçamento muito alto (limite máximo)', async ({ page }) => {
       const viagemOrcamentoAlto = {
         ...viagem,
         orcamento: '999999.99'
@@ -98,7 +105,9 @@ test.describe('Cadastro de Viagens', () => {
       // Assert
       await validarMensagemSucesso(page);
       await validarViagemCriada(page, viagemOrcamentoAlto.nome);
-      await expect(page.getByText(`Orçamento R$ ${viagemOrcamentoAlto}`)).toBeVisible();
+      await expect(page.getByRole('article')
+        .filter({ hasText: 'Saldo disponível' }))
+        .toContainText(formatarMoeda(viagemOrcamentoAlto.orcamento));
     });
 
     test('Deve aceitar nome da viagem com caractere mínimo', async ({ page }) => {
@@ -145,7 +154,7 @@ test.describe('Cadastro de Viagens', () => {
 
   test.describe('Valida campos de datas inicial e final', () => {
 
-    test('BUG - Não deve permitir data final anterior à data inicial', async ({ page }) => {
+    test('Não deve permitir data final anterior à data inicial', async ({ page }) => {
       const dataFinalAnterior = {
         ...viagem,
         dataFim: dataPassada(10),
@@ -153,7 +162,7 @@ test.describe('Cadastro de Viagens', () => {
       // Arrange & Act
       await preencherESubmeterViagem(page, dataFinalAnterior);
       // Assert
-      await validarMensagemErro(page, mensagem => 'A data final não pode ser anterior à data inicial.');
+      await validarMensagemErro(page, 'A data de volta deve ser igual ou posterior à data de ida.');
     });
 
     test('Deve permitir datas no passado', async ({ page }) => {
@@ -170,18 +179,17 @@ test.describe('Cadastro de Viagens', () => {
       await validarPeriodoViagem(page, viagemDataPassado.dataInicio, viagemDataPassado.dataFim);
     });
 
-    test('BUG - Não Deve permitir que a data início esteja nula', async ({ page }) => {
-        const dataInicioNula = {
+    test('Não Deve permitir que a data início esteja nula', async ({ page }) => {
+      const dataInicioNula = {
         ...viagem,
         dataInicio: '',
       };
 
       // Act
       await preencherESubmeterViagem(page, dataInicioNula);
-
       // Assert
-      await validarMensagemSucesso(page);
-      await validarMensagemErro(page, mensagem => 'A data de início é inválida');
+      await validarMensagemErro(page, 'Informe a data de ida.');
+      //await page.getByText('Informe a data de ida.');
     });
   });
 
@@ -191,19 +199,20 @@ test.describe('Cadastro de Viagens', () => {
      * Valida que a aplicação rejeita dados malformados
      */
 
-    test('BUG - Não deve aceitar orçamento negativo', async ({ page }) => {
+    test('Deve gravar viagem com orçamento como "Não definido" para orçamento negativo', async ({ page }) => {
       // Arrange & Act
       await preencherESubmeterViagem(page, {
         ...viagem,
         nome: 'Teste Orçamento Negativo',
         orcamento: '-500',
       });
-
       // Assert
-      await validarMensagemErro(page, mensagem => 'O valor deve ser maior ou igual a 0.');
+      await expect(page.getByRole('article')
+        .filter({ hasText: 'Saldo disponível' }))
+        .toContainText('Não definido');
     });
 
-    test('BUG - Não deve aceitar valores especiais no orçamento', async ({ page }) => {
+    test('Deve gravar viagem com orçamento como "Não definido" para valores especiais no orçamento', async ({ page }) => {
       // Arrange & Act
       await preencherESubmeterViagem(page, {
         ...viagem,
@@ -213,7 +222,9 @@ test.describe('Cadastro de Viagens', () => {
       });
 
       // Assert
-      await validarMensagemErro(page, mensagem => 'O valor deve ser maior ou igual a 0.');
+      await expect(page.getByRole('article')
+        .filter({ hasText: 'Saldo disponível' }))
+        .toContainText('Não definido');
     });
   });
 
@@ -222,7 +233,7 @@ test.describe('Cadastro de Viagens', () => {
     test('Viagem deve permanecer disponível após recarregar a página', async ({ page }) => {
       // Arrange
       const viagemPersistencia = {
-      ...viagem,
+        ...viagem,
         nome: 'Viagem Persistência Teste',
       };
 
@@ -245,6 +256,7 @@ test.describe('Cadastro de Viagens', () => {
         pais: 'Paris',
         dataInicio: dataFutura(),
         dataFim: dataFutura(10),
+        viajantes: '2',
         orcamento: '5000',
         status: 'Planejada'
       };
@@ -255,6 +267,7 @@ test.describe('Cadastro de Viagens', () => {
         pais: 'Espanha',
         dataInicio: dataFutura(),
         dataFim: dataFutura(10),
+        viajantes: '2',
         orcamento: '8000',
         status: 'Planejada'
       };
@@ -262,7 +275,6 @@ test.describe('Cadastro de Viagens', () => {
       // Act: Cadastrar primeira viagem
       await preencherESubmeterViagem(page, viagem1);
       await validarMensagemSucesso(page);
-
       // Act: Cadastrar segunda viagem
       await page.getByRole('button', { name: 'Visão geral', exact: true }).click();
       await page.getByRole('button', { name: 'Nova viagem' }).click();

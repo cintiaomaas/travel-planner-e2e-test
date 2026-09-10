@@ -12,37 +12,37 @@ test.describe('Login de Usuários', () => {
     test('Não deve permitir login com e-mail inválido', async ({ page }) => {
         await preencherLogin(page, 'test@@emailinvalido.com', loginUsuarioExistente.password);
         await page.getByRole('button', { name: 'Entrar' }).click();
-        await expect(page.getByText('Confira os dados informados para entrar na sua conta.')).toBeVisible();
+        await expect(page.getByText('Informe um e-mail válido.')).toBeVisible();
     })
 
     test('Não deve permitir login com senha incorreta', async ({ page }) => {
         await preencherLogin(page, loginUsuarioExistente.email, 'senh1234');
         await page.getByRole('button', { name: 'Entrar' }).click();
-        await expect(page.getByText('Confira os dados informados para entrar na sua conta.')).toBeVisible();
+        await expect(page.getByText('E-mail ou senha inválidos.')).toBeVisible();
     })
 
     test('Não deve permitir login com e-mail não cadastrado', async ({ page }) => {
         await preencherLogin(page, 'emailnaocadastrado@example.com', loginUsuarioExistente.password);
         await page.getByRole('button', { name: 'Entrar' }).click();
-        await expect(page.getByText('Confira os dados informados para entrar na sua conta.')).toBeVisible();
+        await expect(page.getByText('E-mail ou senha inválidos.')).toBeVisible();
     })
 
     test('Não deve permitir login com campos vazios', async ({ page }) => {
         await preencherLogin(page, '', '');
         await page.getByRole('button', { name: 'Entrar' }).click();
-        await expect(page.getByText('Confira os dados informados para entrar na sua conta.')).toBeVisible();
+        await expect(page.getByText('Informe seu e-mail.')).toBeVisible();
     })
 
     test('Não deve permitir login com e-mail válido e senha vazia', async ({ page }) => {
         await preencherLogin(page, loginUsuarioExistente.email, '');
         await page.getByRole('button', { name: 'Entrar' }).click();
-        await expect(page.getByText('A senha deve ter pelo menos 8 caracteres.')).toBeVisible();
+        await expect(page.getByText('Informe sua senha.')).toBeVisible();
     })
 
     test('Não deve permitir login com e-mail vazio e senha válida', async ({ page }) => {
         await preencherLogin(page, '', loginUsuarioExistente.password);
         await page.getByRole('button', { name: 'Entrar' }).click();
-        await expect(page.getByText('Confira os dados informados para entrar na sua conta.')).toBeVisible();
+        await expect(page.getByText('Informe seu e-mail.')).toBeVisible();
     })
 
     test('Deve permitir deslogar um usuário logado com sucesso', async ({ page }) => {
