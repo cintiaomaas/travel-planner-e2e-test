@@ -37,7 +37,7 @@ const test = base.extend({
   },
 });
 
-test.only('Deve integrar o orçamento ao cadastrar, editar e excluir uma despesa', async ({ page, viagemOrcamento }) => {
+test('Deve integrar o orçamento ao cadastrar, editar e excluir uma despesa', async ({ page, viagemOrcamento }) => {
   test.setTimeout(90_000);
   const nome = viagemOrcamento.nome;
   const descricao = 'Hospedagem - integração orçamento';
