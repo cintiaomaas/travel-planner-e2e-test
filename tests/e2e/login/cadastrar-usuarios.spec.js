@@ -29,7 +29,7 @@ test.describe('Cadastro de Usuários', () => {
   test('Não deve permitir e-mail inválido', async ({ page }) => {
     await preencherCadastro(page, testUser.name, 'joao@emailinvalido', testUser.password);
     await page.getByRole('button', { name: 'Criar conta e entrar' }).click();
-    await expect(page.getByText('Confira os dados informados para criar sua conta.')).toBeVisible();
+    await expect(page.getByText('Informe um e-mail válido')).toBeVisible();
   })
 
   test('Não deve permitir senha com menos de 8 caracteres', async ({ page }) => {

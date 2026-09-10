@@ -56,13 +56,38 @@ export async function deleteViagensDoUsuario(email) {
     const [users] = await connection.execute('SELECT id FROM `User` WHERE `email` = ?', [email]);
 
     if (users.length === 0) {
-      return; // Usuário não existe
+      throw new Error('Limpeza: usuário não encontrado no banco configurado. Confira E2E_DATABASE_URL e o e-mail do login.');
     }
 
     const userId = users[0].id;
 
-    // Deleta todas as viagens do usuário
-    await connection.execute('DELETE FROM `Trip` WHERE `userId` = ?', [userId]);
+    await connection.beginTransaction();
+    try {
+      // A interface persiste as viagens neste JSON via /api/planner.
+      const [states] = await connection.execute(
+        'SELECT `data` FROM `PlannerState` WHERE `userId` = ? FOR UPDATE', [userId],
+      );
+      let viagensNoEstado = 0;
+      if (states.length) {
+        const estado = JSON.parse(states[0].data);
+        viagensNoEstado = estado.trips.length;
+        const estadoLimpo = {
+          ...estado,
+          trips: [], expenses: [], checklist: [],
+          selectedTripId: '', tripInfo: {}, timeline: {},
+        };
+        await connection.execute(
+          'UPDATE `PlannerState` SET `data` = ?, `updatedAt` = CURRENT_TIMESTAMP(3) WHERE `userId` = ?',
+          [JSON.stringify(estadoLimpo), userId],
+        );
+      }
+      const [resultado] = await connection.execute('DELETE FROM `Trip` WHERE `userId` = ?', [userId]);
+      await connection.commit();
+      console.log(`[Limpeza] Viagens removidas: PlannerState=${viagensNoEstado}, Trip=${resultado.affectedRows}`);
+    } catch (erro) {
+      await connection.rollback();
+      throw erro;
+    }
   } finally {
     await connection.end();
   }

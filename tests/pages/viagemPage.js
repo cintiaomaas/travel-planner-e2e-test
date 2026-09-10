@@ -9,48 +9,19 @@ export async function preencherFormularioViagem(page, viagem) {
    */
 
   // Preencher Nome da Viagem
-  if (viagem.nome !== undefined) {
-    await page.locator('input[name="name"]').fill(viagem.nome);
-
-  }
-
+  await page.locator('input[name="name"]').fill(viagem.nome);
   // Preencher Destino
-  if (viagem.destino !== undefined) {
-    try {
-      await page.locator('input[name="destination"]').fill(viagem.destino);
-    } catch {
-      await page.getByPlaceholder('Santiago').fill(viagem.destino);
-    }
-  }
-  // Preencher País
-  if (viagem.pais !== undefined) {
-    try {
-      await page.getByPlaceholder('Chile').fill(viagem.pais);
-    } catch {
-      await page.locator('input[placeholder*="country"]').fill(viagem.pais);
-    }
-  }
-
+  await page.getByRole('combobox', { name: 'Destino' }).click();
+  await page.getByRole('combobox', { name: 'Destino' }).fill(viagem.destino);
+  await page.getByRole('option', { name: viagem.pais }).click();
   // Preencher Data de Início
-  if (viagem.dataInicio !== undefined) {
-    await page.locator('input[name="startDate"]').fill(viagem.dataInicio);
-  }
-
+  await page.getByRole('textbox', { name: 'Data de ida' }).fill(viagem.dataInicio);
   // Preencher Data de Fim
-  if (viagem.dataFim !== undefined) {
-    await page.locator('input[name="endDate"]').fill(viagem.dataFim);
-  }
-
+  await page.getByRole('textbox', { name: 'Data de volta' }).fill(viagem.dataFim);
   // Preencher Quantidade de viajantes
-  if (viagem.viajantes !== undefined) {
-    await page.locator('input[name="travelers"]').fill(viagem.viajantes);
-  }
-
+  await page.locator('input[name="travelers"]').fill(viagem.viajantes);
   // Preencher Orçamento
-  if (viagem.orcamento !== undefined) {
-    await page.locator('input[name="budget"]').fill(viagem.orcamento);
-  }
-
+  await page.locator('input[name="budget"]').fill(viagem.orcamento);
   // Selecionar Status Planejada, Em andamento, Concluída
   await page.getByLabel('Status').selectOption(viagem.status);
 }
@@ -60,15 +31,19 @@ export async function submeterFormulario(page) {
 }
 
 export async function preencherESubmeterViagem(page, viagem) {
+  /**
+   * @param {Page} page - Página do Playwright
+   * @param {Object} viagem - Objeto com os dados da viagem
+   * Preenche o formulário de cadastro de viagem e submete
+   */
   await preencherFormularioViagem(page, viagem);
   await submeterFormulario(page);
 }
 
-export async function validarMensagemSucesso(page, viagem) {
+export async function validarMensagemSucesso(page) {
   /**
    * Verifica se a viagem foi cadastrada com sucesso
    * @param {Page} page - Página do Playwright
-   * @param {Object} viagem - Objeto com os dados da viagem
    */
 
   try {
@@ -98,9 +73,7 @@ export async function validarMensagemErro(page, mensagem) {
    * @param {Page} page - Página do Playwright
    * @param {RegExp|string} mensagem - Padrão da mensagem de erro
    */
-  const mensagemErro = typeof mensagem === 'string'
-    ? page.getByText(mensagem)
-    : page.getByText(mensagem);
+  const mensagemErro = page.getByText(mensagem);
 
   await expect(mensagemErro).toBeVisible({ timeout: 5000 });
 }
@@ -125,7 +98,10 @@ export async function buscarViagemPorNome(page, nomeViagem) {
  */
 
 export async function navegarParaMinhasViagens(page, nomeViagem) {
-  await page.getByRole('button', { name: 'Minhas viagens' }).click();
+  const botao = page.locator('aside nav button').filter({
+    has: page.locator('span', { hasText: /^Minhas viagens$/ }),
+  });
+  await botao.click();
   await page.getByPlaceholder('Buscar por cidade ou país').fill(nomeViagem);
 }
 
@@ -142,6 +118,41 @@ export async function validarPeriodoViagem(page, dataInicio, dataFim) {
   );
   await expect(page.getByText(periodoEsperado)).toBeVisible();
 }
+
+/**
+ * Exclui uma viagem específica
+ * @param {*} page pagina do playwright
+ * @param {*} viagem objeto com nome da viagem
+ */
+
+export async function navegarMinhasViagensExcluirViagem(page, viagem) {
+  await navegarParaMinhasViagens(page, viagem);
+  // Espera o próximo diálogo nativo do navegador e confirma automaticamente, 
+  // como clicar em OK na pergunta “Deseja excluir esta viagem?
+  // dialog.accept() é chamado para aceitar o diálogo, permitindo que a ação de exclusão prossiga.
+    page.once('dialog', async dialog => {
+    await dialog.accept();
+  });
+  await page.getByRole('button', { name: `Excluir ${viagem}`, exact: true }).click();
+  await expect(page.getByText('Viagem excluída.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: viagem, exact: true })).not.toBeVisible();
+  await expect(page.getByText('Nenhuma viagem por aqui')).toBeVisible();
+}
+
+export async function excluirViagem(page, viagem) {
+  // Espera o próximo diálogo nativo do navegador e confirma automaticamente, 
+  // como clicar em OK na pergunta “Deseja excluir esta viagem?
+  // dialog.accept() é chamado para aceitar o diálogo, permitindo que a ação de exclusão prossiga.
+    page.once('dialog', async dialog => {
+    await dialog.accept();
+  });
+  await page.getByRole('button', { name: `Excluir ${viagem}`, exact: true }).click();
+  await expect(page.getByText('Viagem excluída.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: viagem, exact: true })).not.toBeVisible();
+  await expect(page.getByText('Nenhuma viagem por aqui')).toBeVisible();
+}
+
+
 
 
 
