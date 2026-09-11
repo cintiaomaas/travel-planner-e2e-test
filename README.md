@@ -19,9 +19,12 @@ travel-planner-e2e-test/
 │       └── playwright.yml
 ├── tests/
 │   ├── data/
+│   │   ├── checklist.js
 │   │   ├── usuarios.js
 │   │   └── viagens.js
 │   ├── e2e/
+│   │   ├── checklist/
+│   │   │   └── gerenciar-checklist.spec.js
 │   │   ├── login/
 │   │   │   ├── cadastrar-usuarios.spec.js
 │   │   │   └── login-usuarios.spec.js
@@ -35,6 +38,7 @@ travel-planner-e2e-test/
 │   │   └── dateHelper.js
 │   └── pages/
 │       ├── autenticacaoPage.js
+│       ├── checklistPage.js
 │       ├── orcamentoPage.js
 │       └── viagemPage.js
 ├── .env.example
@@ -92,6 +96,14 @@ Quando `E2E_DATABASE_URL` não está definida, o helper procura `DATABASE_URL` n
 O arquivo `.env` pode conter credenciais e não deve ser versionado. Mantenha apenas valores fictícios no `.env.example`.
 
 ## Executando os testes
+
+Executar os onze cenários independentes de checklist:
+
+```powershell
+npx.cmd playwright test tests/e2e/checklist
+```
+
+Os cenários cobrem checklist básico automático (12 itens em quatro grupos para a viagem internacional, todos pendentes e com progresso zero), inclusão, campo obrigatório (vazio e espaços), conclusão, desmarcação, edição, exclusão, múltiplos itens, exibição por grupo, persistência dos estados e associação à viagem. O beforeAll cria uma viagem compartilhada pela suíte. O beforeEach abre essa viagem em um novo contexto autenticado e gera nomes exclusivos para os itens de cada cenário. O cenário de checklist automático cria uma viagem própria; o de associação cria uma segunda viagem para comparação. O afterAll remove todas as viagens do usuário exclusivo da automação com deleteViagensDoUsuario. Em caso de falha, o Playwright pode reiniciar o worker e executar os hooks novamente para os testes restantes. As funções de interação e preparação ficam em tests/pages/checklistPage.js. A suíte reutiliza o usuário de teste existente e requer acesso ao banco configurado para essa limpeza. As alterações aguardam a sincronização em `/api/planner` antes das verificações após recarregar a página. Não há uso de `test.step` nesses cenários.
 
 Executar toda a suíte:
 
