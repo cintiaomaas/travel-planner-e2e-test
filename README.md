@@ -20,6 +20,7 @@ travel-planner-e2e-test/
 ├── tests/
 │   ├── data/
 │   │   ├── checklist.js
+│   │   ├── dashboard.js
 │   │   ├── usuarios.js
 │   │   └── viagens.js
 │   ├── e2e/
@@ -31,14 +32,23 @@ travel-planner-e2e-test/
 │   │   ├── orcamento/
 │   │   │   └── integracao-orcamento-despesas.spec.js
 │   │   └── viagem/
-│   │       └── cadastrar-viagem.spec.js
+│   │       ├── cadastrar-viagem.spec.js
+│   │       └── dashboard-viagem.spec.js
+│   ├── fixtures/
+│   │   └── authFixture.js
 │   ├── helpers/
+│   │   ├── authSession.js
 │   │   ├── currencyHelper.js
+│   │   ├── dashboardLifecycle.js
+│   │   ├── dashboardTeardown.js
 │   │   ├── database.js
-│   │   └── dateHelper.js
+│   │   ├── dateHelper.js
+│   │   ├── globalSetup.js
+│   │   └── globalTeardown.js
 │   └── pages/
 │       ├── autenticacaoPage.js
 │       ├── checklistPage.js
+│       ├── dashboardPage.js
 │       ├── orcamentoPage.js
 │       └── viagemPage.js
 ├── .env.example
@@ -102,8 +112,6 @@ Executar os onze cenários independentes de checklist:
 ```powershell
 npx.cmd playwright test tests/e2e/checklist
 ```
-
-Os cenários cobrem checklist básico automático (12 itens em quatro grupos para a viagem internacional, todos pendentes e com progresso zero), inclusão, campo obrigatório (vazio e espaços), conclusão, desmarcação, edição, exclusão, múltiplos itens, exibição por grupo, persistência dos estados e associação à viagem. O beforeAll cria uma viagem compartilhada pela suíte. O beforeEach abre essa viagem em um novo contexto autenticado e gera nomes exclusivos para os itens de cada cenário. O cenário de checklist automático cria uma viagem própria; o de associação cria uma segunda viagem para comparação. O afterAll remove todas as viagens do usuário exclusivo da automação com deleteViagensDoUsuario. Em caso de falha, o Playwright pode reiniciar o worker e executar os hooks novamente para os testes restantes. As funções de interação e preparação ficam em tests/pages/checklistPage.js. A suíte reutiliza o usuário de teste existente e requer acesso ao banco configurado para essa limpeza. As alterações aguardam a sincronização em `/api/planner` antes das verificações após recarregar a página. Não há uso de `test.step` nesses cenários.
 
 Executar toda a suíte:
 
