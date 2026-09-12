@@ -36,13 +36,20 @@ export async function sincronizarDashboard(page, verificar, acao) {
   return resposta.request().postDataJSON();
 }
 
-export async function salvarDespesaDashboard(page, despesa, editar = false) {
+export async function salvarDespesaDashboard(page, despesa, editar = false, descricaoAnterior = despesa.descricao) {
   await abrirOrcamento(page);
   if (editar) {
-    await linhaDespesa(page, despesa.descricao).getByRole('button', { name: `Editar ${despesa.descricao}`, exact: true }).click();
+    await linhaDespesa(page, descricaoAnterior).getByRole('button', { name: `Editar ${descricaoAnterior}`, exact: true }).click();
   } else {
     await page.getByRole('button', { name: 'Adicionar despesa', exact: true }).click();
   }
+  await preencherDadosDespesa(page, despesa);
+  const modal = page.getByRole('dialog');
+  await modal.getByRole('button', { name: editar ? 'Salvar alterações' : 'Salvar despesa', exact: true }).click();
+  await expect(modal).not.toBeVisible();
+}
+
+export async function preencherDadosDespesa(page, despesa) {
   const modal = page.getByRole('dialog');
   await modal.getByLabel('Descrição', { exact: true }).fill(despesa.descricao);
   await modal.getByRole('combobox', { name: 'Categoria', exact: true }).selectOption(despesa.categoria);
@@ -51,8 +58,6 @@ export async function salvarDespesaDashboard(page, despesa, editar = false) {
   await modal.getByLabel('Valor unitário', { exact: true }).fill(String(despesa.valor));
   const pago = modal.getByRole('switch', { name: 'Status do pagamento', exact: true });
   if ((await pago.getAttribute('aria-checked')) !== String(despesa.pago)) await pago.click();
-  await modal.getByRole('button', { name: editar ? 'Salvar alterações' : 'Salvar despesa', exact: true }).click();
-  await expect(modal).not.toBeVisible();
 }
 
 export async function editarOrcamentoDashboard(page, valor, peloCard = false) {
@@ -88,28 +93,31 @@ export async function lerEstadoDashboard(page) {
   return (await resposta.json()).data;
 }
 
-export async function prepararViagemDashboard(page) {
-  const registro = await lerViagemDaExecucao();
+export async function prepararViagemDashboard(page, dadosViagem = viagemDashboard, chave = 'dashboard') {
+  const registro = await lerViagemDaExecucao(chave);
   const estado = await lerEstadoDashboard(page);
   if (registro) {
     expect(estado.trips.some(item => item.id === registro.id), 'A viagem compartilhada deve continuar disponível').toBe(true);
     return registro;
   }
-  expect(estado.trips.filter(item => item.name === viagemDashboard.nome),
-    'Já existe uma viagem Teste dashboard. A suíte não altera viagens preexistentes.').toHaveLength(0);
-  await page.getByRole('button', { name: 'Nova viagem', exact: true }).click();
+  expect(estado.trips.filter(item => item.name === dadosViagem.nome),
+    `Já existe uma viagem ${dadosViagem.nome}. A suíte não altera viagens preexistentes.`).toHaveLength(0);
+  await page.getByRole('navigation', { name: 'Navegação principal' })
+    .getByRole('button', { name: /^Minhas viagens(?: \d+)?$/ }).click();
+  // A listagem vazia repete a mesma ação no cabeçalho e no estado vazio.
+  await page.getByRole('button', { name: 'Nova viagem', exact: true }).first().click();
   let gravacao;
   const registrarCriacao = request => {
     if (new URL(request.url()).pathname !== '/api/planner' || request.method() !== 'PUT') return;
-    const criada = request.postDataJSON().trips?.find(item => item.name === viagemDashboard.nome);
-    if (criada && !gravacao) gravacao = registrarViagemDaExecucao({ id: criada.id, nome: criada.name });
+    const criada = request.postDataJSON().trips?.find(item => item.name === dadosViagem.nome);
+    if (criada && !gravacao) gravacao = registrarViagemDaExecucao({ id: criada.id, nome: criada.name }, chave);
   };
   page.on('request', registrarCriacao);
   try {
-    const salvo = await sincronizarDashboard(page, dados => dados.trips.some(item => item.name === viagemDashboard.nome),
-      () => preencherESubmeterViagem(page, viagemDashboard));
-    await validarViagemCriada(page, viagemDashboard.nome);
-    const criada = salvo.trips.find(item => item.name === viagemDashboard.nome);
+    const salvo = await sincronizarDashboard(page, dados => dados.trips.some(item => item.name === dadosViagem.nome),
+      () => preencherESubmeterViagem(page, dadosViagem));
+    await validarViagemCriada(page, dadosViagem.nome);
+    const criada = salvo.trips.find(item => item.name === dadosViagem.nome);
     return { id: criada.id, nome: criada.name };
   } finally {
     page.off('request', registrarCriacao);
@@ -141,11 +149,11 @@ export async function prepararEstadoDashboard(page, viagem) {
   await abrirDashboard(page);
 }
 
-export async function alterarDespesaDashboard(page, viagem, dados, editar = true) {
+export async function alterarDespesaDashboard(page, viagem, dados, editar = true, descricaoAnterior = dados.descricao) {
   await sincronizarDashboard(page, estado => estado.expenses.some(item =>
     item.tripId === viagem.id && item.description === dados.descricao &&
     item.convertedAmount === dados.valor && item.category === dados.categoria && item.paid === dados.pago),
-  () => salvarDespesaDashboard(page, dados, editar));
+  () => salvarDespesaDashboard(page, dados, editar, descricaoAnterior));
 }
 
 export async function alterarOrcamentoDashboard(page, viagem, valor, peloCard = false) {

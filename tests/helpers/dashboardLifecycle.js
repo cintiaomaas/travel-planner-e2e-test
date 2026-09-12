@@ -8,16 +8,18 @@ export default async function iniciarExecucaoDashboard() {
   process.env.DASHBOARD_EXECUTION_FILE = path.join(tmpdir(), `travel-dashboard-${randomUUID()}.json`);
 }
 
-export async function lerViagemDaExecucao() {
+export async function lerViagemDaExecucao(chave = 'dashboard') {
   try {
-    return JSON.parse(await readFile(process.env.DASHBOARD_EXECUTION_FILE, 'utf8'));
+    return JSON.parse(await readFile(arquivoViagem(chave), 'utf8'));
   } catch (erro) {
     if (erro.code === 'ENOENT') return null;
     throw erro;
   }
 }
 
-export async function registrarViagemDaExecucao(viagem) {
-  await writeFile(process.env.DASHBOARD_EXECUTION_FILE, JSON.stringify(viagem), 'utf8');
+export async function registrarViagemDaExecucao(viagem, chave = 'dashboard') {
+  await writeFile(arquivoViagem(chave), JSON.stringify(viagem), 'utf8');
 }
-
+export function arquivoViagem(chave = 'dashboard') {
+  return chave === 'dashboard' ? process.env.DASHBOARD_EXECUTION_FILE : `${process.env.DASHBOARD_EXECUTION_FILE}.${chave}`;
+}

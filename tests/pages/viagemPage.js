@@ -23,7 +23,7 @@ export async function preencherFormularioViagem(page, viagem) {
   // Preencher Orçamento
   await page.locator('input[name="budget"]').fill(viagem.orcamento);
   // Selecionar Status Planejada, Em andamento, Concluída
-  await page.getByLabel('Status').selectOption(viagem.status);
+  await page.getByRole('dialog').getByLabel('Status').selectOption(viagem.status);
 }
 
 export async function submeterFormulario(page) {

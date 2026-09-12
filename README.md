@@ -30,6 +30,7 @@ travel-planner-e2e-test/
 │   │   │   ├── cadastrar-usuarios.spec.js
 │   │   │   └── login-usuarios.spec.js
 │   │   ├── orcamento/
+|   |   |   ├── gerenciar-despesas.spec.js
 │   │   │   └── integracao-orcamento-despesas.spec.js
 │   │   └── viagem/
 │   │       ├── cadastrar-viagem.spec.js
@@ -49,6 +50,7 @@ travel-planner-e2e-test/
 │       ├── autenticacaoPage.js
 │       ├── checklistPage.js
 │       ├── dashboardPage.js
+|       ├── despesasPage.js
 │       ├── orcamentoPage.js
 │       └── viagemPage.js
 ├── .env.example
