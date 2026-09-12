@@ -6,6 +6,8 @@ import 'dotenv/config';
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
+  globalSetup: './tests/helpers/globalSetup.js',
+  globalTeardown: './tests/helpers/globalTeardown.js',
   testDir: './tests/e2e',
   /* Run tests in files in parallel */
   fullyParallel: false, //true = executa os testes em paralelo, false = executa os testes de forma sequencial
