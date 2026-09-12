@@ -11,7 +11,7 @@ import {
   validarGraficoDashboard, abrirDashboard,
 } from '../../pages/dashboardPage.js';
 
-test.describe.only('Dashboard da viagem', () => {
+test.describe('Dashboard da viagem', () => {
   test.describe.configure({ mode: 'default', retries: 0 });
   test.setTimeout(90_000);
   let viagem;
